@@ -153,39 +153,98 @@ function pearson(a, b) {
   return num / Math.sqrt(da * db);
 }
 
-function findBestMatch(prices, template, recentFraction = 0.4) {
+function findBestMatch(prices, template) {
   const tmpl = normalize(template.map(y => 1 - y));
   const N    = prices.length;
+  const minWin = Math.max(template.length + 2, 8);
 
-  // Any window that ENDS in the last recentFraction of candles is flagged "recent".
-  // e.g. recentFraction=0.4, N=252 → candle 151+ is "recent zone".
-  const recentCutoff = Math.floor(N * (1 - recentFraction));
-
-  // Scan ALL history with varied window sizes (15%–70%).
-  // Large enough to have shape, varied enough to catch different pattern lengths.
-  const ratios   = [0.15, 0.20, 0.28, 0.36, 0.45, 0.55, 0.65, 0.70];
-  const minWin   = Math.max(template.length + 2, 8);
+  // Window sizes to try: 12% – 65% of total candles
+  const ratios   = [0.12, 0.18, 0.25, 0.33, 0.42, 0.52, 0.62, 0.65];
   const winSizes = [...new Set(
     ratios.map(r => Math.round(N * r)).filter(w => w >= minWin && w <= N)
   )];
 
-  let best = { score: -1, start: 0, end: N - 1, matchPrices: prices.slice(-1) };
+  // ── PASS 1: Windows that END at the very last candle (daysAgo = 0) ──
+  // This is the only thing that matters for actionable signals.
+  // Pattern must be finishing RIGHT NOW.
+  let tailBest = { score: -1, start: 0, end: N-1, matchPrices: [] };
+  for (const wSz of winSizes) {
+    const st  = N - wSz;           // always ends at last candle
+    if (st < 0) continue;
+    const win  = prices.slice(st);
+    const winN = resample(normalize(win), tmpl.length);
+    const corr = pearson(tmpl, winN);
+    if (corr > tailBest.score) {
+      tailBest = { score: corr, start: st, end: N-1, matchPrices: win };
+    }
+  }
 
+  // ── PASS 2: Windows ending within last 5 candles (near-tail, "just completing") ──
+  let nearBest = { score: -1, start: 0, end: N-1, matchPrices: [] };
+  for (const wSz of winSizes) {
+    for (let lag = 1; lag <= 5; lag++) {
+      const end = N - 1 - lag;
+      const st  = end - wSz + 1;
+      if (st < 0) continue;
+      const win  = prices.slice(st, end + 1);
+      const winN = resample(normalize(win), tmpl.length);
+      const corr = pearson(tmpl, winN);
+      if (corr > nearBest.score) {
+        nearBest = { score: corr, start: st, end, matchPrices: win };
+      }
+    }
+  }
+
+  // ── PASS 3: Full history scan (historical reference only) ──
+  let histBest = { score: -1, start: 0, end: N-1, matchPrices: [] };
   for (const wSz of winSizes) {
     for (let st = 0; st <= N - wSz; st++) {
       const win  = prices.slice(st, st + wSz);
       const winN = resample(normalize(win), tmpl.length);
       const corr = pearson(tmpl, winN);
       const end  = st + wSz - 1;
-      if (corr > best.score) {
-        best = { score: corr, start: st, end, matchPrices: win };
+      if (corr > histBest.score) {
+        histBest = { score: corr, start: st, end, matchPrices: win };
       }
     }
   }
 
-  // Flag whether the best match ended in the recent zone
-  const isRecent = best.end >= recentCutoff;
-  return { ...best, isRecent };
+  // Pick the best from tail first, then near, then hist
+  // isRecent = pattern is ending at or within 5 candles of today
+  const daysAgoTail = 0;
+  const daysAgoNear = N - 1 - nearBest.end;
+
+  let chosen, daysAgo, isRecent;
+
+  if (tailBest.score >= nearBest.score && tailBest.score >= 0) {
+    chosen   = tailBest;
+    daysAgo  = 0;
+    isRecent = true;
+  } else if (nearBest.score >= tailBest.score && nearBest.score >= 0) {
+    // Use near only if it scores meaningfully better than tail
+    if (nearBest.score > tailBest.score + 0.04) {
+      chosen   = nearBest;
+      daysAgo  = daysAgoNear;
+      isRecent = true;
+    } else {
+      chosen   = tailBest;
+      daysAgo  = 0;
+      isRecent = true;
+    }
+  } else {
+    chosen   = histBest;
+    daysAgo  = N - 1 - histBest.end;
+    isRecent = false;
+  }
+
+  // If the tail/near score is way below hist, mark as historical
+  if (histBest.score > chosen.score + 0.15) {
+    chosen   = histBest;
+    daysAgo  = N - 1 - histBest.end;
+    isRecent = false;
+  }
+
+  return { ...chosen, daysAgo, isRecent };
 }
 
 // ─── API handlers ──────────────────────────────────────────────────────────────
@@ -224,7 +283,7 @@ async function handleScanAPI(body, res) {
       const match = findBestMatch(data.prices, template, recentFraction);
 
       if (match.score >= minScore) {
-        const daysAgo = data.prices.length - 1 - match.end;
+        const daysAgo = match.daysAgo !== undefined ? match.daysAgo : (data.prices.length - 1 - match.end);
         results.push({
           symbol:      sym.symbol,
           name:        sym.name,
