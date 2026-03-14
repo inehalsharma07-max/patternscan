@@ -1016,8 +1016,10 @@ function addRow(d) {
   const cur=getCurrencySymbol();
   const priceStr = d.price ? (d.price < 1 ? cur+d.price.toFixed(6) : d.price < 100 ? cur+d.price.toFixed(4) : cur+d.price.toFixed(2)) : '—';
   const recencyTag = d.daysAgo === 0
-    ? `<span style="color:var(--green);font-size:0.62rem">● today</span>`
-    : `<span style="color:var(--yellow);font-size:0.62rem">${d.daysAgo}d ago</span>`;
+    ? `<span style="color:var(--green);font-size:0.62rem;font-weight:700">▶ forming now</span>`
+    : d.daysAgo <= 3
+      ? `<span style="color:var(--yellow);font-size:0.62rem">~${d.daysAgo}d ago</span>`
+      : `<span style="color:var(--text-muted);font-size:0.62rem">${d.daysAgo}d ago</span>`;
   const tr=document.createElement('tr');
   tr.style.animation='fadeIn 0.3s ease';
   tr.innerHTML=`
