@@ -78,19 +78,19 @@
     .panel-right { display:flex; flex-direction:column; overflow:hidden; }
 
     /* ── SCAN BAR ── */
-    .scan-bar { flex-shrink:0; display:flex; align-items:flex-end; gap:16px; padding:12px 20px; border-bottom:1px solid var(--border); background:var(--surface); flex-wrap:wrap; }
+    .scan-bar { flex-shrink:0; display:flex; align-items:flex-end; gap:12px; padding:12px 16px; border-bottom:1px solid var(--border); background:var(--surface); flex-wrap:wrap; }
     .cfg { display:flex; flex-direction:column; gap:4px; }
     .cfg-lbl { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); }
-    select { background:var(--surface3); border:1px solid var(--border); color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.72rem; padding:5px 10px; border-radius:4px; cursor:pointer; outline:none; }
+    select { background:var(--surface3); border:1px solid var(--border); color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.72rem; padding:5px 10px; border-radius:4px; cursor:pointer; outline:none; max-width:100%; }
     select:focus { border-color:var(--accent-light); }
     input[type="range"] { width:100px; accent-color:var(--accent-light); cursor:pointer; }
     .tval { font-size:0.75rem; color:var(--accent-light); min-width:36px; font-weight:600; }
-    .scan-btn { margin-left:auto; padding:10px 30px; border:none; border-radius:6px; background:var(--accent); color:#fff; font-family:'Syne',sans-serif; font-size:0.95rem; font-weight:700; cursor:pointer; transition:all 0.2s; letter-spacing:0.03em; display:flex; align-items:center; gap:8px; white-space:nowrap; }
-    .scan-btn:hover:not(:disabled) { background:var(--accent-light); box-shadow:0 0 20px var(--accent-glow); transform:translateY(-1px); }
-    .scan-btn:disabled { opacity:0.45; cursor:not-allowed; transform:none; }
+    .scan-btn { width:100%; justify-content:center; margin-left:0; padding:13px 20px; border:none; border-radius:8px; background:var(--accent); color:#fff; font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; cursor:pointer; transition:all 0.2s; letter-spacing:0.03em; display:flex; align-items:center; gap:8px; white-space:nowrap; }
+    .scan-btn:hover:not(:disabled) { background:var(--accent-light); box-shadow:0 0 20px var(--accent-glow); }
+    .scan-btn:disabled { opacity:0.45; cursor:not-allowed; }
 
     /* ── RESULTS ── */
-    .results-wrap { flex:1; overflow-y:auto; padding:16px 20px; }
+    .results-wrap { flex:1; overflow-y:auto; padding:16px; }
     .results-wrap::-webkit-scrollbar{width:6px} .results-wrap::-webkit-scrollbar-track{background:transparent} .results-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
 
     .status-bar { display:flex; align-items:center; gap:10px; margin-bottom:14px; font-size:0.7rem; color:var(--text-muted); }
@@ -104,23 +104,23 @@
     .prog-bar { width:100%;height:2px;background:var(--surface3);border-radius:1px;overflow:hidden; }
     .prog-fill { height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-light));border-radius:1px;transition:width 0.4s ease; }
 
-    .results-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+    .results-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; flex-wrap:wrap; gap:6px; }
     .results-title { font-family:'Syne',sans-serif; font-size:0.85rem; font-weight:700; }
     .results-meta { font-size:0.65rem; color:var(--text-muted); }
 
     /* ── STOCK TABLE ── */
     .results-table { width:100%; border-collapse:collapse; }
     .results-table thead tr { border-bottom:1px solid var(--border); }
-    .results-table th { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); padding:6px 10px; text-align:left; font-weight:500; background:var(--surface); }
+    .results-table th { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-muted); padding:6px 8px; text-align:left; font-weight:500; background:var(--surface); }
     .results-table th:last-child { text-align:right; }
     .results-table tbody tr { border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.12s; }
     .results-table tbody tr:hover { background:rgba(37,99,235,0.05); }
-    .results-table td { padding:10px 10px; font-size:0.72rem; vertical-align:middle; }
+    .results-table td { padding:10px 8px; font-size:0.72rem; vertical-align:middle; }
 
     .sym-cell .sym { font-size:0.82rem; font-weight:700; color:var(--text); }
     .sym-cell .sname { font-size:0.62rem; color:var(--text-muted); margin-top:1px; }
 
-    .spark-cell { width:130px; padding:6px 10px; }
+    .spark-cell { width:100px; padding:6px 8px; }
     .spark-cell canvas { display:block; }
 
     .score-pill { display:inline-block; font-size:0.7rem; font-weight:700; padding:3px 9px; border-radius:100px; }
@@ -140,6 +140,76 @@
     .empty-icon { font-size:3rem; margin-bottom:16px; opacity:0.3; }
     .empty h3 { font-family:'Syne',sans-serif; font-size:1.1rem; color:var(--text); margin-bottom:8px; }
     .empty p { font-size:0.72rem; line-height:1.7; }
+
+    /* ── MOBILE TAB BAR ── */
+    .mob-tabs { display:none; }
+
+    /* ── MOBILE RESPONSIVE ── */
+    @media (max-width: 768px) {
+      html, body { overflow:hidden; height:100%; }
+
+      /* Hide desktop header subtitle */
+      .logo .sub { display:none; }
+      header { padding:0 14px; }
+
+      /* Stack panels vertically, hide right by default */
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: 1fr;
+        position: relative;
+      }
+
+      .panel-left  { display:none; position:absolute; inset:0; z-index:10; overflow-y:auto; }
+      .panel-right { display:flex; position:absolute; inset:0; }
+
+      .panel-left.mob-active  { display:flex; }
+      .panel-right.mob-active { display:flex; }
+      /* right panel is default visible */
+      .panel-right { display:flex; }
+
+      /* Scan bar stacks nicely */
+      .scan-bar { gap:10px; padding:10px 12px; }
+      .cfg { width:calc(50% - 5px); }
+      .scan-btn { margin-top:4px; }
+
+      /* Tab bar at bottom */
+      .mob-tabs {
+        display: flex;
+        flex-shrink: 0;
+        border-top: 1px solid var(--border);
+        background: var(--surface);
+      }
+      .mob-tab {
+        flex: 1;
+        padding: 10px 4px 8px;
+        border: none;
+        background: none;
+        color: var(--text-muted);
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 0.62rem;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 3px;
+        transition: color 0.15s;
+        letter-spacing: 0.04em;
+      }
+      .mob-tab .tab-icon { font-size: 1.1rem; line-height:1; }
+      .mob-tab.active { color: var(--accent-light); border-top: 2px solid var(--accent-light); }
+      .mob-tab:hover { color: var(--text); }
+
+      /* Drawer takes full screen on mobile */
+      #detailDrawer { width:100%; top:52px; }
+
+      /* Smaller canvas on mobile */
+      #patternCanvas { height:160px; }
+
+      /* Table: hide sparkline col on very small screens */
+      @media (max-width: 480px) {
+        .spark-cell, .results-table th:nth-child(2) { display:none; }
+      }
+    }
 
     /* ── FILTER BAR ── */
     .filter-bar {
@@ -319,6 +389,19 @@
       </div>
     </div>
   </div>
+</div>
+
+<!-- ── MOBILE TAB BAR ── -->
+<div class="mob-tabs">
+  <button class="mob-tab" id="tab-draw" onclick="mobTab('draw')">
+    <span class="tab-icon">✏</span>Draw
+  </button>
+  <button class="mob-tab" id="tab-presets" onclick="mobTab('presets')">
+    <span class="tab-icon">⚡</span>Presets
+  </button>
+  <button class="mob-tab active" id="tab-scan" onclick="mobTab('scan')">
+    <span class="tab-icon">◎</span>Scan
+  </button>
 </div>
 
 <!-- ═══ DETAIL DRAWER ═══ -->
@@ -1087,12 +1170,67 @@ function showToast(msg) {
 }
 
 // ═══════════════════════════════════════════════════════
+//  MOBILE TAB SWITCHING
+// ═══════════════════════════════════════════════════════
+function mobTab(tab) {
+  const isMobile = window.innerWidth <= 768;
+  if (!isMobile) return;
+
+  const left  = document.querySelector('.panel-left');
+  const right = document.querySelector('.panel-right');
+
+  // Update tab buttons
+  ['draw','presets','scan'].forEach(t => {
+    const btn = document.getElementById('tab-'+t);
+    if (btn) btn.classList.toggle('active', t === tab);
+  });
+
+  if (tab === 'scan') {
+    left.classList.remove('mob-active');
+    right.style.display = 'flex';
+    // Scroll right panel to scan bar
+    const scanBar = document.querySelector('.scan-bar');
+    if (scanBar) scanBar.scrollIntoView({ behavior:'smooth' });
+  } else {
+    // Show left panel, scroll to right section
+    left.classList.add('mob-active');
+    right.style.display = 'none';
+    if (tab === 'presets') {
+      setTimeout(() => {
+        const presets = document.getElementById('presetsGrid');
+        if (presets) presets.scrollIntoView({ behavior:'smooth', block:'start' });
+      }, 50);
+    } else {
+      left.scrollTop = 0;
+    }
+  }
+}
+
+function initMobile() {
+  if (window.innerWidth <= 768) {
+    // Default: show scan (right) panel on mobile
+    document.querySelector('.panel-right').style.display = 'flex';
+    document.querySelector('.panel-left').classList.remove('mob-active');
+  }
+}
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) {
+    // Restore desktop layout
+    document.querySelector('.panel-left').classList.remove('mob-active');
+    document.querySelector('.panel-left').style.display = '';
+    document.querySelector('.panel-right').style.display = '';
+  }
+});
+
+// ═══════════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════════
 window.addEventListener('resize', setupCanvas);
 initPresets();
 setupCanvas();
 checkServer();
+initMobile();
 </script>
 </body>
 </html>
