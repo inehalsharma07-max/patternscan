@@ -389,7 +389,7 @@
       .mob-tab .tab-icon { font-size:1rem; line-height:1; }
       .mob-tab.active { color:var(--blue); border-top:2px solid var(--blue); }
       #detailDrawer { width:100%; top:52px; }
-      #patternCanvas { height:150px; }
+      #patternCanvas { height:200px; }
       .mob-scan-wrap { display:block; padding:12px 14px; background:var(--s1); border-top:1px solid var(--b1); position:sticky; bottom:0; }
       .mob-scan-btn { width:100%; padding:12px; border:none; border-radius:var(--r); background:var(--blue); color:#fff; font-family:'Inter',sans-serif; font-size:0.88rem; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
     }
@@ -1725,7 +1725,6 @@ function mobTab(tab) {
   const left  = document.querySelector('.panel-left');
   const right = document.querySelector('.panel-right');
 
-  // Update active tab
   ['draw','results'].forEach(t => {
     const btn = document.getElementById('tab-'+t);
     if (btn) btn.classList.toggle('active', t === tab);
@@ -1735,8 +1734,12 @@ function mobTab(tab) {
     left.classList.add('mob-active');
     right.style.display = 'none';
     left.scrollTop = 0;
+    // Canvas has zero size when panel was hidden — resize now that it's visible
+    requestAnimationFrame(() => {
+      setupCanvas();
+      render();
+    });
   } else {
-    // results tab
     left.classList.remove('mob-active');
     right.style.display = 'flex';
   }
@@ -1837,11 +1840,16 @@ function loadFromURL() {
 
 function initMobile() {
   if (window.innerWidth <= 768) {
-    // Default: show Draw tab first so user draws before scanning
+    // Show Draw panel first — user needs to draw before scanning
     document.querySelector('.panel-right').style.display = 'none';
     document.querySelector('.panel-left').classList.add('mob-active');
     document.getElementById('tab-draw')?.classList.add('active');
     document.getElementById('tab-results')?.classList.remove('active');
+    // Size canvas now that panel is visible
+    requestAnimationFrame(() => {
+      setupCanvas();
+      render();
+    });
   }
 }
 
