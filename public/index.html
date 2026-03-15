@@ -677,7 +677,12 @@ function getPos(e) {
   const r  = canvas.getBoundingClientRect();
   const sx = canvas.width  / r.width;
   const sy = canvas.height / r.height;
-  const src = e.touches ? e.touches[0] : e;
+  // touches[0] for touchstart/touchmove, changedTouches[0] for touchend
+  const src = (e.touches && e.touches.length)
+    ? e.touches[0]
+    : (e.changedTouches && e.changedTouches.length)
+      ? e.changedTouches[0]
+      : e;
   return {
     x: Math.max(0, Math.min(canvas.width,  (src.clientX - r.left) * sx)),
     y: Math.max(0, Math.min(canvas.height, (src.clientY - r.top)  * sy)),
@@ -708,11 +713,10 @@ function rdp(pts, eps) {
 
 function simplifyStroke(raw) {
   if (raw.length < 2) return [];
-  // Step 1: subsample (every 3rd point) to reduce noise before RDP
-  const sub = raw.filter((_, i) => i % 3 === 0 || i === raw.length - 1);
-  // Step 2: RDP with epsilon = 4px
-  const simplified = rdp(sub, 4);
-  // Step 3: normalise to 0-1 using canvas dimensions
+  // Subsample less aggressively on touch (every 2nd point) — fingers produce fewer points
+  const sub = raw.filter((_, i) => i % 2 === 0 || i === raw.length - 1);
+  // RDP with epsilon = 3px (was 4 — touch needs to keep more detail)
+  const simplified = rdp(sub, 3);
   return simplified.map(p => ({
     x: p.x / canvas.width,
     y: p.y / canvas.height,
@@ -744,9 +748,45 @@ canvas.addEventListener('mousemove', e => {
 
 canvas.addEventListener('mouseup',    finishStroke);
 canvas.addEventListener('mouseleave', finishStroke);
-canvas.addEventListener('touchstart', e => { e.preventDefault(); canvas.dispatchEvent(new MouseEvent('mousedown', {clientX: e.touches[0].clientX, clientY: e.touches[0].clientY})); }, {passive:false});
-canvas.addEventListener('touchmove',  e => { e.preventDefault(); canvas.dispatchEvent(new MouseEvent('mousemove', {clientX: e.touches[0].clientX, clientY: e.touches[0].clientY})); }, {passive:false});
-canvas.addEventListener('touchend',   e => { e.preventDefault(); canvas.dispatchEvent(new MouseEvent('mouseup')); }, {passive:false});
+
+// ── Native touch handlers (direct, not delegated to mouse events) ──
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  isDrawing = true;
+  rawStroke = [];
+  points    = [];
+  document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+  activePresetId = null;
+  const p = getPos(e);
+  rawStroke.push(p);
+  renderLive();
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  if (!isDrawing) return;
+  const p    = getPos(e);
+  const last = rawStroke[rawStroke.length - 1];
+  if (!last || Math.hypot(p.x - last.x, p.y - last.y) >= 1.5) {
+    rawStroke.push(p);
+    renderLive();
+  }
+}, { passive: false });
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  e.stopPropagation();
+  finishStroke();
+}, { passive: false });
+
+canvas.addEventListener('touchcancel', e => {
+  e.preventDefault();
+  isDrawing = false;
+  rawStroke = [];
+  render();
+}, { passive: false });
 
 function validatePattern(pts) {
   if (!pts || pts.length < 3) return 'Draw at least 3 points to define a pattern.';
@@ -758,7 +798,7 @@ function validatePattern(pts) {
 
   // ── 2. No horizontal progress ──
   const xSpan = Math.max(...pts.map(p=>p.x)) - Math.min(...pts.map(p=>p.x));
-  if (xSpan < 0.3) return 'Pattern is too narrow. Draw it across the full canvas left to right.';
+  if (xSpan < 0.2) return 'Pattern is too narrow. Draw it across the canvas left to right.';
 
   // ── 3. Too much going backwards ──
   let backSteps = 0;
